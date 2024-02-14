@@ -549,6 +549,9 @@ namespace sick_scan_xd
     rosDeclareParam(nh, "skip", config_.skip);
     rosGetParam(nh, "skip", config_.skip);
 
+    rosDeclareParam(nh, "publish_minimal", config_.publish_minimal);
+    rosGetParam(nh, "publish_minimal", config_.publish_minimal);
+
     rosDeclareParam(nh, "sw_pll_only_publish", config_.sw_pll_only_publish);
     rosGetParam(nh, "sw_pll_only_publish", config_.sw_pll_only_publish);
 
@@ -628,15 +631,17 @@ namespace sick_scan_xd
 
     // Pointcloud2 publisher
     //
-    ROS_INFO_STREAM("Publishing lidar pointcloud2 to " << cloud_topic_val);
-    cloud_pub_ = rosAdvertise<ros_sensor_msgs::PointCloud2>(nh, cloud_topic_val, 100);
+    if (!config_.publish_minimal){
+      ROS_INFO_STREAM("Publishing lidar pointcloud2 to " << cloud_topic_val);
+      cloud_pub_ = rosAdvertise<ros_sensor_msgs::PointCloud2>(nh, cloud_topic_val, 100);
 
-    imuScan_pub_ = rosAdvertise<ros_sensor_msgs::Imu>(nh, nodename + "/imu", 100);
+      imuScan_pub_ = rosAdvertise<ros_sensor_msgs::Imu>(nh, nodename + "/imu", 100);
 
-    Encoder_pub = rosAdvertise<sick_scan_msg::Encoder>(nh, nodename + "/encoder", 100);
+      Encoder_pub = rosAdvertise<sick_scan_msg::Encoder>(nh, nodename + "/encoder", 100);
 
-    // scan publisher
-    pub_ = rosAdvertise<ros_sensor_msgs::LaserScan>(nh, laserscan_topic, 1000);
+      // scan publisher
+      pub_ = rosAdvertise<ros_sensor_msgs::LaserScan>(nh, laserscan_topic, 1000);
+    }    
 
 #if defined USE_DIAGNOSTIC_UPDATER
     if(diagnostics_)
@@ -4883,7 +4888,9 @@ namespace sick_scan_xd
 #ifndef _MSC_VER
                 if (parser_->getCurrentParamPtr()->getEncoderMode() >= 0 && FireEncoder == true)//
                 {
-                  rosPublish(Encoder_pub, EncoderMsg);
+                  if (!config_.publish_minimal){
+                    rosPublish(Encoder_pub, EncoderMsg);
+                  }
                 }
                 if (numOfLayers > 4)
                 {
@@ -4899,9 +4906,13 @@ namespace sick_scan_xd
                   if(diagnosticPub_)
                     diagnosticPub_->publish(msg);
                   else
-                    rosPublish(pub_, msg);
+                    if (!config_.publish_minimal){
+                      rosPublish(pub_, msg);
+                    }
 #else
-                  rosPublish(pub_, msg);
+                  if (!config_.publish_minimal){
+                    rosPublish(pub_, msg);
+                  }                  
 #endif
 
                 }
@@ -5168,7 +5179,9 @@ namespace sick_scan_xd
                   // standard handling of scans
                   notifyPolarPointcloudListener(nh, &cloud_msg_polar);
                   notifyCartesianPointcloudListener(nh, &cloud_msg);
-                  rosPublish(cloud_pub_, cloud_);
+                  if (!config_.publish_minimal){
+                    rosPublish(cloud_pub_, cloud_);
+                  }
                 }
                 else if (config_.cloud_output_mode == 2)
                 {
@@ -5258,7 +5271,9 @@ namespace sick_scan_xd
 
                     sick_scan_xd::PointCloud2withEcho partial_cloud_msg(&partialCloud, numValidEchos, 0);
                     notifyCartesianPointcloudListener(nh, &partial_cloud_msg);
-                    rosPublish(cloud_pub_, partialCloud);
+                    if (!config_.publish_minimal){
+                      rosPublish(cloud_pub_, partialCloud);
+                    }
                     //memcpy(&(partialCloud.data[0]), &(cloud_.data[0]) + i * cloud_.point_step, cloud_.point_step * numPartialShots);
                     //cloud_pub_.publish(partialCloud);
                   }

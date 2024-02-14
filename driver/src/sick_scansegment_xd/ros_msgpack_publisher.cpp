@@ -267,6 +267,7 @@ sick_scansegment_xd::RosMsgpackPublisher::RosMsgpackPublisher(const std::string&
 #endif
 {
 	m_active = false;
+	m_publish_minimal = config.publish_minimal;
   m_frame_id = config.publish_frame_id;
 	m_node = config.node;
 	m_laserscan_layer_filter = config.laserscan_layer_filter;
@@ -289,9 +290,11 @@ sick_scansegment_xd::RosMsgpackPublisher::RosMsgpackPublisher(const std::string&
     rosGetParam(m_node, "ros_qos", qos_val);
     if (qos_val >= 0)
         qos = qos_converter.convert(qos_val);
-	  m_publisher_laserscan_segment = create_publisher<ros_sensor_msgs::LaserScan>(config.publish_laserscan_segment_topic, qos);
-	  ROS_INFO_STREAM("RosMsgpackPublisher: publishing LaserScan segment messages on topic \"" << m_publisher_laserscan_segment->get_topic_name() << "\"");
-      m_publisher_laserscan_360 = create_publisher<ros_sensor_msgs::LaserScan>(config.publish_laserscan_fullframe_topic, qos);
+	  if (!config.publish_minimal){
+		m_publisher_laserscan_segment = create_publisher<ros_sensor_msgs::LaserScan>(config.publish_laserscan_segment_topic, qos);
+	  	ROS_INFO_STREAM("RosMsgpackPublisher: publishing LaserScan segment messages on topic \"" << m_publisher_laserscan_segment->get_topic_name() << "\"");
+	  }
+	  m_publisher_laserscan_360 = create_publisher<ros_sensor_msgs::LaserScan>(config.publish_laserscan_fullframe_topic, qos);
       ROS_INFO_STREAM("RosMsgpackPublisher: publishing LaserScan fullframe messages on topic \"" << m_publisher_laserscan_360->get_topic_name() << "\"");
 		if (config.imu_enable)
 		{
@@ -1033,9 +1036,11 @@ void sick_scansegment_xd::RosMsgpackPublisher::HandleMsgPackData(const sick_scan
 	}
 #if defined RASPBERRY && RASPBERRY > 0 // laserscan messages deactivated on Raspberry for performance reasons
 #else
-	LaserScanMsgMap laser_scan_msg_map; // laser_scan_msg_map[echo][layer] := LaserScan message given echo (Multiscan136: max 3 echos) and layer index (Multiscan136: 16 layer)
-	convertPointsToLaserscanMsg(msgpack_data.timestamp_sec, msgpack_data.timestamp_nsec, lidar_points, total_point_count, laser_scan_msg_map, m_frame_id, false);
-	publishLaserScanMsg(m_node, m_publisher_laserscan_segment, laser_scan_msg_map, std::max(1, (int)echo_count), segment_idx);
+	if (!m_publish_minimal){
+		LaserScanMsgMap laser_scan_msg_map; // laser_scan_msg_map[echo][layer] := LaserScan message given echo (Multiscan136: max 3 echos) and layer index (Multiscan136: 16 layer)
+		convertPointsToLaserscanMsg(msgpack_data.timestamp_sec, msgpack_data.timestamp_nsec, lidar_points, total_point_count, laser_scan_msg_map, m_frame_id, false);
+		publishLaserScanMsg(m_node, m_publisher_laserscan_segment, laser_scan_msg_map, std::max(1, (int)echo_count), segment_idx);
+	}
 #endif
 }
 

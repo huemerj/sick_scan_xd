@@ -449,7 +449,7 @@ public:
 #include <diagnostic_updater/publisher.hpp>
 #include <rcl_interfaces/msg/set_parameters_result.hpp>
 #define USE_DYNAMIC_RECONFIGURE
-#define USE_DIAGNOSTIC_UPDATER
+// #define USE_DIAGNOSTIC_UPDATER
 namespace sick_scan_xd
 {
     // Adapter to combine publisher for sensor_msgs::msg::PointCloud2 and diagnostic_msgs::msg::DiagnosticArray.
@@ -513,6 +513,7 @@ namespace sick_scan_xd
         bool use_generation_timestamp = true;
         double time_offset = 0;
         int cloud_output_mode = 0;
+        bool publish_minimal = false;
     };
 }
 #endif

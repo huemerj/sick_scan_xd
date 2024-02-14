@@ -385,7 +385,7 @@ namespace sick_scansegment_xd
         double m_scan_time = 0;                              // scan_time = 1 / scan_frequency = time for a full 360-degree rotation of the sensor
         std::vector<int> m_laserscan_layer_filter;           // Configuration of laserscan messages (ROS only), activate/deactivate laserscan messages for each layer
 	    std::vector<CustomPointCloudConfiguration> m_custom_pointclouds_cfg; // Configuration of customized pointclouds
-
+        bool m_publish_minimal = false;
     };  // class RosMsgpackPublisher
 
 }   // namespace sick_scansegment_xd
